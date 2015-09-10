@@ -1,8 +1,7 @@
 var xmlparse,           // xml parser
     request,            // for running get requests
     geohash,            // geohashing lib
-    isTi,               // boolean representing whether we're in titanium
-    _ = require('underscore');
+    isTi;               // boolean representing whether we're in titanium
 
 isTi = true;
 try {
@@ -171,15 +170,14 @@ if (!isTi) {
 
 function client () {
    "use strict";
-   	var 	exports          = {},
-       		agencyData       = {},
-       		agency           = null,
-       		baseURL          = 
-        	 "http://webservices.nextbus.com/service/publicXMLFeed?command=",
-       		isAgencyCached   = false,
-       		is_nb		 = true,
-		vehicleLastTime  = null,
-		activeExpireTime;
+   var exports          = {},
+       agencyData       = {},
+       agency           = null,
+       baseURL          = 
+         "http://webservices.nextbus.com/service/publicXMLFeed?command=",
+       isAgencyCached   = false,
+       vehicleLastTime  = null,
+       activeExpireTime;
 
    /*
       Group: Public Functions
@@ -362,7 +360,7 @@ function client () {
                   // if we're not in titanium, we're in node, and we just used
                   // jsdom for parsing.  If we don't call window.close(), jsdom
                   // will leak an enormous amount of memory.
-                  typeof response.close == "function" && response.close();
+                  if (response) typeof response.close == "function" && response.close();
                }
             }
 
@@ -559,7 +557,7 @@ function client () {
                // if we're not in titanium, we're in node, and we just used
                // jsdom for parsing.  If we don't call window.close(), jsdom
                // will leak an enormous amount of memory.
-               typeof response.close == "function" && response.close();
+               if (response) typeof response.close == "function" && response.close();
             }
          }
       });
@@ -612,24 +610,18 @@ function client () {
       out.routes = {};
       out.stops = {};
       agency = name;
-
       // actually run the query
       query("routeConfig", '', function (err, data) {
          var i, j,
              route, routes, 
              stop, stops,
-             dirs,
-	     is_nb = true,
-	     newark = ['kearney', 'penn', 'pennexpr', 'mdntpenn', 'connect'];
-
+             dirs;
 
          try {
             if (err) {
                throw err;
             }
-	    if (agency !== 'rutgers'){
-		is_nb = false;
-	    }
+
             // the titanium xml parser is a little weird, we don't have to do
             // .document.  So, if we're in titanium, get the data a little
             // differently
@@ -641,15 +633,8 @@ function client () {
 
             for (i = 0; i < routes.length; i++) {
                route = routes.item(i).getAttribute('tag');
-		if(is_nb && _.contains(newark, route)){
-    			delete routes[route];
-			continue;
-		}
-		if(!is_nb && !(_.contains(newark, route))){
-    			delete routes[route];
-			continue;
-		}
-		//setup the route object
+
+               //setup the route object
                out.routes[route] = {
                   queries     : {},
                   stops       : [],
@@ -754,12 +739,12 @@ function client () {
     *                  active routes and stops respectively
     */
 
-   function guessActive (campus, callback) {
-      	if (!isAgencyCached) {
-         	callback({name: "nocache", message: "no agency cache"}, null);
-         	return;
-      	}
-	
+   function guessActive (callback) {
+      if (!isAgencyCached) {
+         callback({name: "nocache", message: "no agency cache"}, null);
+         return;
+      }
+
       // we temporarily use hashes for activeRoutes/Stops, because then we
       // don't have to deal with duplicates.  Once we've gone through
       // everything one time and we have activeRoutes and activeStops
@@ -779,21 +764,21 @@ function client () {
       
       // we do this by simply running a vehiclelocations query.  we assume
       // any routes that have buses running are active
-      vehicleLocations(campus, null, function (err, response) {
+
+      vehicleLocations(null, function (err, response) {
          var i, item, route, data, stop;
-	console.log("__________VL_RESPONSE________");
-//	console.log(response);
+
          // our response will be an object mapping routes to vehicles.  we dont
          // care about the values, but the keys tell us exactly which routes are
          // active.
          activeRoutes = response;
+
          // second, we use our route guesses to mark the stops as active
+         
          active.routes = [];
-	if (!activeRoutes){
-		return;
-	}
+
          // loop over the active routes
-         for (route in activeRoutes) {
+         for (route in activeRoutes) { 
             if (activeRoutes.hasOwnProperty(route)) {
                // add to the final output
                active.routes.push({tag: route, title: agencyData.routes[route].title});
@@ -877,9 +862,9 @@ function client () {
     *    data[route][i][speed]   - *string* speed in km/h
     */
 
-   function vehicleLocations (campus, route, callback, resetTime) {
-      var str = '',
-	  mason_dixon = 40.58841;
+   function vehicleLocations (route, callback, resetTime) {
+      var str = '';
+
       if (route) {
          str += '&r=' + route;
       }
@@ -887,8 +872,9 @@ function client () {
       if (!resetTime && vehicleLastTime) {
          str += "&t=" + vehicleLastTime;
       }
+
       query('vehicleLocations', str, function (err, response) {
-	var vehicles, vehicle, lastTime, i, result = {}, route, data, current_lat;
+         var vehicles, vehicle, lastTime, i, result = {}, route, data;
          try {
             if (err) {
                throw err;
@@ -902,60 +888,27 @@ function client () {
                lastTime = response.document.getElementsByTagName(fixStr('lastTime'));
             }
 
-            vehicleLastTime = lastTime.item(0).getAttribute('time');
+            vehicleLastTime = lastTime.item(0).getAttribute('time');           
+
             for (i = 0; i < vehicles.length; i++) {
                vehicle = vehicles.item(i);
                route = vehicle.getAttribute(fixStr('routeTag'));
                result[route] = result[route] || [];
-		current_lat = null;
-		current_lat = vehicle.getAttribute('lat');
-		if (campus === 'nb'){
-			if (current_lat < mason_dixon){
-				result[route].push({
-					id:      vehicle.getAttribute('id'),
-                  			dirtag:  vehicle.getAttribute(fixStr('dirtag')),
-                  			lat:     current_lat,
-                  			lon:     vehicle.getAttribute('lon'),
-                  			predictable: vehicle.getAttribute('predictable') === 'true',
-                  			heading: vehicle.getAttribute('heading'),
-                  			since:   vehicle.getAttribute(fixStr('secsSinceReport')),
-                  			speed:   vehicle.getAttribute(fixStr('speedKmHr'))
-               			});
-			}
-		}else if (campus === 'nwk'){
-			if (current_lat > mason_dixon){
-				console.log(current_lat + " > " + mason_dixon);
-                        	result[route].push({
-                        		id:      vehicle.getAttribute('id'),
-                        		dirtag:  vehicle.getAttribute(fixStr('dirtag')),
-                        		lat:     current_lat,
-                        		lon:     vehicle.getAttribute('lon'),
-                        		predictable: vehicle.getAttribute('predictable') === 'true',
-                        		heading: vehicle.getAttribute('heading'),
-                        		since:   vehicle.getAttribute(fixStr('secsSinceReport')),
-                        		speed:   vehicle.getAttribute(fixStr('speedKmHr'))
-                        	});
-                	}
-		}else{
-			console.log("Invalid campus: " + campus);
-		}
+               result[route].push({
+                  id:      vehicle.getAttribute('id'),
+                  dirtag:  vehicle.getAttribute(fixStr('dirtag')),
+                  lat:     vehicle.getAttribute('lat'),
+                  lon:     vehicle.getAttribute('lon'),
+                  predictable: vehicle.getAttribute('predictable') === 'true',
+                  heading: vehicle.getAttribute('heading'),
+                  since:   vehicle.getAttribute(fixStr('secsSinceReport')),
+                  speed:   vehicle.getAttribute(fixStr('speedKmHr'))
+               });
             }
-		for (route in result){
-			if (result.hasOwnProperty(route)){
-				console.log("___" + route + "___");
-				if (Object.keys(result[route]).length === 0){
-					delete result[route];
-				}
-				//for (var prop in result[route]){
-				//	if (route.hasOwnProperty(prop)){
-				//		console.log(prop);
-				//	}
-				//}
-			}
-		}
+
             callback(null, result);
          } catch (e) {
-		console.log("error 3: return of the sir charles errorjam: " + e);
+            callback(e, null);
          }
       });
    }
@@ -1023,18 +976,16 @@ function client () {
    */
 
    function query (command, str, cb) {
-      var url = baseURL + command + "&a=" + "rutgers" + str;
+      var url = baseURL + command + "&a=" + agency + str;
 
       request(url, function (err, response, data) {
          if (err) {
-	    console.log("error in query request: " + err);
             cb(err, null);
          }
          
          else {
             xmlparse(data, function (err, dom) {
                if (err) {
-		  console.log("error in xmlparse callback: " + err);
                   cb(err, null);
                } else {
                   cb(null, dom);
