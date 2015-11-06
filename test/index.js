@@ -7,11 +7,11 @@ var vows       = require('vows'),
     _          = require('underscore'),
     rutgers    = nextbus(),
     invalidnb  = nextbus(),
-    dtconn     = nextbus();
+    dtconn     = nextbus(),
+    lowerBound = 0,
+    upperBound = 60.58841;
 
 var suite = vows.describe('nextbus js general');
-
-var masonDixon = 60.58841;
 
 var isNumStrArray = function (ar) {
    assert.isArray(ar);
@@ -128,7 +128,7 @@ suite.addBatch({
    },
 
    'rutgers' : {
-      topic    : function () { rutgers.cacheAgency('rutgers', 0, masonDixon, this.callback); },
+      topic    : function () { rutgers.cacheAgency('rutgers', lowerBound, upperBound, this.callback); },
       'doesnt break' : function (topic) {
          assert.isObject(topic);
       },
@@ -248,7 +248,7 @@ suite.addBatch({
 
       'vehicleLocations' : {
          topic: function () {
-            rutgers.vehicleLocations(0, masonDixon, null, this.callback, true);
+            rutgers.vehicleLocations(lowerBound, upperBound, null, this.callback, true);
          },
 
          'valid return': isValidVehicleLocations

@@ -6,7 +6,9 @@ var vows       = require('vows'),
     async      = require('async'),
     rutgers    = nextbus(),
     invalidnb  = nextbus(),
-    dtconn     = nextbus();
+    dtconn     = nextbus(),
+    lowerBound = 0,
+    upperBound = 60.58841;
 
 var suite = vows.describe('guess active');
 
@@ -53,12 +55,12 @@ function isValidStopList (err,data) {
 
 suite.addBatch({
    'caching agency' : {
-      topic    : function () { rutgers.cacheAgency('rutgers', this.callback); },
+      topic    : function () { rutgers.cacheAgency('rutgers', lowerBound, upperBound, this.callback); },
       'doesnt break' : function (topic) {
          assert.isObject(topic);
       },
       'guessActive' : {
-         topic : function () { rutgers.guessActive(this.callback); },
+         topic : function () { rutgers.guessActive(lowerBound, upperBound, this.callback); },
          'valid return' : function (err, data) {
             assert.isNull(err);
             assert.isObject(data);
