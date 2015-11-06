@@ -5,6 +5,7 @@ var vows       = require('vows'),
     readfile   = require('fs').readFile,
     async      = require('async'),
     _          = require('underscore'),
+    nock       = require('nock'),
     rutgers    = nextbus(),
     invalidnb  = nextbus(),
     dtconn     = nextbus(),
@@ -254,6 +255,32 @@ suite.addBatch({
          'valid return': isValidVehicleLocations
       }
    }
+});
+
+suite.addBatch({
+    '503 response handling' : {
+        topic: function () {
+            var mock503 = nock('http://webservices.nextbus.com')
+                .get('/service/publicXMLFeed')
+                .query(true)
+                .replyWithFile(503, __dirname+'/replies/503.html');
+            rutgers.vehicleLocations(lowerBound, upperBound, null, this.callback, true);
+        },
+
+        'valid return': isValidVehicleLocations
+    },
+
+    'empty response handling' : {
+        topic: function() {
+            var mockEmpty = nock('http://webservices.nextbus.com')
+                .get('/service/publicXMLFeed')
+                .query(true)
+                .reply(200, '');
+            rutgers.vehicleLocations(lowerBound, upperBound, null, this.callback, true);
+        },
+
+        'valid return': isValidVehicleLocations
+    }
 });
 
 suite.export(module);
