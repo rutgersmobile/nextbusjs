@@ -268,8 +268,10 @@ suite.addBatch({
         },
 
         'valid return': isValidVehicleLocations
-    },
+    }
+});
 
+suite.addBatch({
     'empty response handling' : {
         topic: function() {
             var mockEmpty = nock('http://webservices.nextbus.com')
