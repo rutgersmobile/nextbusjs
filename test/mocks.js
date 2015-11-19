@@ -24,7 +24,7 @@ suite.addBatch({
             var mockRutgersAgency = nock(baseURL)
                 .get(getPath)
                 .query({command: 'routeConfig', a: 'rutgers'})
-                .reply(404, '');
+                .reply(404);
             rutgers.cacheAgency('rutgers', lowerBound, upperBound, this.callback);
         },
         'throws an error for bad cache attempt': function (err, data) {
