@@ -1,7 +1,7 @@
 nextbus.js
 ==========
 
-[![build status](https://secure.travis-ci.org/rf/nextbusjs.png)](http://travis-ci.org/rf/nextbusjs)
+[![Build Status](https://travis-ci.org/rutgersmobile/nextbusjs.svg?branch=master)](https://travis-ci.org/rutgersmobile/nextbusjs)
 
 A reasonable interface to nextbus written in Javascript, targeting both
 Appcelerator Titanium and Node.JS.
