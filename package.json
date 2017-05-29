@@ -2,9 +2,12 @@
   "author": "Russ Frank <russ.frank@rutgers.edu>",
   "name": "nextbusjs",
   "description": "nextbus api wrapper",
-  "files": ["lib"],
+  "files": [
+    "lib"
+  ],
   "main": "lib/index.js",
   "scripts": {
+    "demo": "node demo.js",
     "test": "vows --spec test/*.js"
   },
   "version": "1.0.1",
@@ -22,7 +25,7 @@
     "vows": "*"
   },
   "dependencies": {
-    "jsdom": "*",
-    "request": "*"
+    "axios": "^0.16.1",
+    "xmldom": "^0.1.27"
   }
 }
