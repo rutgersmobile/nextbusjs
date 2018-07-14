@@ -2,8 +2,12 @@
   "author": "Russ Frank <russ.frank@rutgers.edu>",
   "name": "nextbusjs",
   "description": "nextbus api wrapper",
-  "main": "lib/index",
+  "files": [
+    "lib"
+  ],
+  "main": "lib/index.js",
   "scripts": {
+    "demo": "node demo.js",
     "test": "vows --spec test/*.js"
   },
   "version": "1.0.1",
@@ -12,18 +16,16 @@
   "repository": {
     "url": "git://github.com/russfrank/nextbusjs.git"
   },
-  "engines": {
-    "node": "0.10.x"
-  },
   "devDependencies": {
     "JSV": "*",
     "async": "*",
     "nock": "^2.17.0",
+    "prettier": "^1.3.1",
     "underscore": "*",
     "vows": "*"
   },
   "dependencies": {
-    "request": "2.9.x",
-    "jsdom": "0.7.x"
+    "axios": "^0.16.1",
+    "xmldom": "^0.1.27"
   }
 }
